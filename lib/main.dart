@@ -29,13 +29,23 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.red,
+        colorScheme: const ColorScheme(
           brightness: Brightness.dark,
+          primary: Colors.white,
+          onPrimary: Colors.black,
+          secondary: Colors.black,
+          onSecondary: Colors.white,
+          error: Colors.red,
+          onError: Colors.white,
+          background: Colors.black,
+          onBackground: Colors.white,
+          surface: Colors.black,
+          onSurface: Colors.white,
         ),
         useMaterial3: true,
       ),
       themeMode: ThemeMode.dark,
+      debugShowCheckedModeBanner: false,
       home: const MyHomePage(title: 'Calendar Demo'),
     );
   }
