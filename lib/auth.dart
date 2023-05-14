@@ -18,7 +18,9 @@ class AuthManager {
     clientId: Env.googleClientId,
   );
 
-    // Declare a getter for the authenticated HTTP client
+
+  Stream<GoogleSignInAccount?> get onAuthStateChanged => _googleSignIn.onCurrentUserChanged;
+
   Future get authenticatedClient async {
     return (await _googleSignIn.authenticatedClient())!;
   }

@@ -1,10 +1,10 @@
 import 'package:dart_openai/openai.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:poet_calendar/auth.dart';
 import 'package:googleapis/calendar/v3.dart' as calendar;
 
 class CalendarWidget extends StatefulWidget {
-
   const CalendarWidget({Key? key}) : super(key: key);
 
   @override
@@ -14,13 +14,17 @@ class CalendarWidget extends StatefulWidget {
 class CalendarWidgetState extends State<CalendarWidget> {
   String poem = "Loading...";
 
-  // A method to fetch the user's calendar events
-  Future<String?> _fetchEvents() async {
-    // Get an authenticated HTTP client from the AuthManager singleton
-    var httpClient = await AuthManager().authenticatedClient;
+  @override
+  void initState() {
+    super.initState();
+    // Call updatePoem here
+    _updatePoem();
+  }
 
+  // A method to fetch the user's calendar events
+  Future<String?> _fetchEvents(Client authenticatedClient) async {
 // Create a CalendarApi client which can be used to fetch calendar events
-    var calendarApi = calendar.CalendarApi(httpClient);
+    var calendarApi = calendar.CalendarApi(authenticatedClient);
 
 // Get a list of calendars
     var calList = await calendarApi.calendarList.list();
@@ -28,28 +32,25 @@ class CalendarWidgetState extends State<CalendarWidget> {
 // Get the start and end of today in UTC
     var now = DateTime.now();
     var startOfDay = DateTime.utc(now.year, now.month, now.day);
-    var endOfDay = startOfDay.add(const Duration(days: 1)).subtract(const Duration(microseconds: 1));
-
-    var allEvents = [];
+    var endOfDay = startOfDay
+        .add(const Duration(days: 1))
+        .subtract(const Duration(seconds: 1));
+    List<calendar.Event> allEvents = [];
 
 // Iterate over the calendars
     for (var cal in calList.items!) {
       // Get the calendar id
       var calId = cal.id!;
       // Get the events for this calendar that occur today
-      var calEvents = await calendarApi.events.list(calId, timeMin: startOfDay, timeMax: endOfDay);
+      var calEvents = await calendarApi.events
+          .list(calId, timeMin: startOfDay, timeMax: endOfDay);
 
-      allEvents.addAll(calEvents.items as Iterable);
+      allEvents.addAll(calEvents.items as Iterable<calendar.Event>);
     }
 
+    // event in allEvents
 
-    var events = allEvents.map((e) => {
-    // if the event has a summary and description
-    if (e.summary != null && e.description != null)
-        // return a string with the event summary and description
-      "${e.summary}: ${e.description}"
-        else e.summary
-    }).join("\n");
+    var events = allEvents.map((e) => {e.summary}).join("\n");
 
     return events;
   }
@@ -57,7 +58,8 @@ class CalendarWidgetState extends State<CalendarWidget> {
   Future<String> _generatePoem(String? events) async {
     var prompt = "create a poem from my calendar events: $events";
 
-    OpenAIChatCompletionModel chatCompletion = await OpenAI.instance.chat.create(
+    OpenAIChatCompletionModel chatCompletion =
+        await OpenAI.instance.chat.create(
       model: "gpt-3.5-turbo",
       messages: [
         OpenAIChatCompletionChoiceMessageModel(
@@ -71,29 +73,19 @@ class CalendarWidgetState extends State<CalendarWidget> {
   }
 
   void _updatePoem() async {
-    var events = await _fetchEvents();
-    var poem = await _generatePoem(events);
+    var authenticatedClient = await AuthManager().authenticatedClient;
+    var events = await _fetchEvents(authenticatedClient);
+    // var generatedPoem = await _generatePoem(events);
     setState(() {
-      this.poem = poem;
+      poem = events ?? "no events :(";
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Text(
-          poem,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        ElevatedButton(
-          onPressed: _updatePoem,
-          child: const Text("Fetch events"),
-        ),
-      ],
+    return Text(
+      poem,
+      style: Theme.of(context).textTheme.displaySmall,
     );
   }
 }
-

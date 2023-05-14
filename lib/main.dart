@@ -1,6 +1,7 @@
 import 'package:dart_openai/openai.dart';
 import 'package:flutter/material.dart';
 import 'package:poet_calendar/auth.dart';
+import 'package:poet_calendar/auth_wrapper.dart';
 import 'package:poet_calendar/calendar.dart';
 import 'package:poet_calendar/clock.dart';
 import 'package:poet_calendar/env/env.dart';
@@ -85,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ), // display the clock on the top left corner
       body: // clock on the top left corner
-           const Stack(
+      const Stack(
         children: [
           Positioned(
             top: 30,
@@ -99,27 +100,9 @@ class _MyHomePageState extends State<MyHomePage> {
             child: WeatherWidget(),//WeatherWidget(city: "Stanford, US", apiKey: "2486eb6a56d9df5491125265cb03659e"),
           ),
           // display the calendar events on the center of the  screen
-
           Center(
-            child: CalendarWidget(),
-          ),
-
-          // Padding(
-          //   padding: const EdgeInsets.all(8.0),
-          //   child: // display the calendar events on the screen
-          //       ListView.builder(
-          //     itemCount: _events.length,
-          //     itemBuilder: (context, index) {
-          //       var event = _events[index];
-          //       return Card(
-          //         child: ListTile(
-          //           title: Text(event.summary ?? ''),
-          //           subtitle: Text(event.description ?? ''),
-          //         ),
-          //       );
-          //     },
-          //   ),
-          // ),
+            child: AuthWrapper(child: CalendarWidget()),
+          )
         ],
       ),
 
