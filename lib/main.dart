@@ -1,11 +1,14 @@
+import 'package:dart_openai/openai.dart';
 import 'package:flutter/material.dart';
 import 'package:poet_calendar/auth.dart';
-import 'package:googleapis/calendar/v3.dart' as calendar;
+import 'package:poet_calendar/calendar.dart';
 import 'package:poet_calendar/clock.dart';
+import 'package:poet_calendar/env/env.dart';
 import 'package:poet_calendar/weather.dart';
 
 
 void main() {
+  OpenAI.apiKey = Env.openAiKey;
   runApp(const MyApp());
 }
 
@@ -58,32 +61,6 @@ class MyHomePage extends StatefulWidget {
 
 // Modify the _MyHomePageState class to use the AuthManager class instead of directly using the GoogleSignIn object
 class _MyHomePageState extends State<MyHomePage> {
-  // A list of events to display on the screen
-  List<calendar.Event> _events = [];
-
-  // A method to fetch the user's calendar events
-  void _fetchEvents() async {
-    // Get an authenticated HTTP client from the AuthManager singleton
-    var httpClient = await AuthManager().authenticatedClient;
-
-    // Create a CalendarApi client which can be used to fetch calendar events
-    var calendarApi = calendar.CalendarApi(httpClient);
-
-    var calEvents = await calendarApi.events.list('primary', maxResults: 10);
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _events without calling setState(), the the build method would not be
-      // called again, and so nothing would appear to happen.
-
-      _events = calEvents.items!; // Store the events in the _events list
-
-      // print data from getWeatherData(). It returns Future<List<Observation>> getWeatherData()
-    });
-  }
-
-
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -111,6 +88,12 @@ class _MyHomePageState extends State<MyHomePage> {
             right: 30,
             child: WeatherWidget(),//WeatherWidget(city: "Stanford, US", apiKey: "2486eb6a56d9df5491125265cb03659e"),
           ),
+          // display the calendar events on the center of the  screen
+
+          Center(
+            child: CalendarWidget(),
+          ),
+
           // Padding(
           //   padding: const EdgeInsets.all(8.0),
           //   child: // display the calendar events on the screen
@@ -134,12 +117,8 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: () async {
           if (isLoggedIn) {
             await AuthManager().signOut();
-            setState(() {
-              _events = [];
-            });
           } else {
             await AuthManager().signIn();
-            _fetchEvents();
           }
         },
         tooltip: isLoggedIn ? 'Sign Out' : 'Sign In',

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "447462076711",
+    "firebase_url": "https://first-firebase-ac481-default-rtdb.firebaseio.com",
+    "project_id": "first-firebase-ac481",
+    "storage_bucket": "first-firebase-ac481.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:447462076711:android:9f0921a4e16db75d0eb902",
+        "android_client_info": {
+          "package_name": "com.example.poet_calendar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "447462076711-n274ptisov58rhkk3a0s94kat4agvagm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.poet_calendar",
+            "certificate_hash": "02e520ee2c383c9681d509a35207aa15795d1126"
+          }
+        },
+        {
+          "client_id": "447462076711-m6e2nfm2vnlp1d0bmo74lcpf3kt01deo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDB0BPzvEz6fDF8zGwA2jcuAPsCTtcFaRg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "447462076711-m6e2nfm2vnlp1d0bmo74lcpf3kt01deo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
