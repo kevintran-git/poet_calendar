@@ -12,26 +12,50 @@ class CalendarWidget extends StatefulWidget {
 }
 
 class CalendarWidgetState extends State<CalendarWidget> {
-   // A list of events to display on the screen
-  // List<calendar.Event> _events = [];
   String poem = "Loading...";
 
   // A method to fetch the user's calendar events
-  void _fetchEvents() async {
+  Future<String?> _fetchEvents() async {
     // Get an authenticated HTTP client from the AuthManager singleton
     var httpClient = await AuthManager().authenticatedClient;
 
-    // Create a CalendarApi client which can be used to fetch calendar events
+// Create a CalendarApi client which can be used to fetch calendar events
     var calendarApi = calendar.CalendarApi(httpClient);
 
-    var calEvents = await calendarApi.events.list('primary', maxResults: 10);
-    var events = calEvents.items!;
-    var eventsText = events.map((e) =>
-    e.summary
-    ).join("\n");
+// Get a list of calendars
+    var calList = await calendarApi.calendarList.list();
 
-    var prompt = "create a poem from my calendar events: $eventsText";
-    print(prompt);
+// Get the start and end of today in UTC
+    var now = DateTime.now();
+    var startOfDay = DateTime.utc(now.year, now.month, now.day);
+    var endOfDay = startOfDay.add(const Duration(days: 1)).subtract(const Duration(microseconds: 1));
+
+    var allEvents = [];
+
+// Iterate over the calendars
+    for (var cal in calList.items!) {
+      // Get the calendar id
+      var calId = cal.id!;
+      // Get the events for this calendar that occur today
+      var calEvents = await calendarApi.events.list(calId, timeMin: startOfDay, timeMax: endOfDay);
+
+      allEvents.addAll(calEvents.items as Iterable);
+    }
+
+
+    var events = allEvents.map((e) => {
+    // if the event has a summary and description
+    if (e.summary != null && e.description != null)
+        // return a string with the event summary and description
+      "${e.summary}: ${e.description}"
+        else e.summary
+    }).join("\n");
+
+    return events;
+  }
+
+  Future<String> _generatePoem(String? events) async {
+    var prompt = "create a poem from my calendar events: $events";
 
     OpenAIChatCompletionModel chatCompletion = await OpenAI.instance.chat.create(
       model: "gpt-3.5-turbo",
@@ -43,17 +67,20 @@ class CalendarWidgetState extends State<CalendarWidget> {
       ],
     );
 
-    print(chatCompletion.choices.first.message.content);
+    return chatCompletion.choices.first.message.content;
+  }
 
-
+  void _updatePoem() async {
+    var events = await _fetchEvents();
+    var poem = await _generatePoem(events);
     setState(() {
-      poem = chatCompletion.choices.first.message.content;
+      this.poem = poem;
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
@@ -62,7 +89,7 @@ class CalendarWidgetState extends State<CalendarWidget> {
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         ElevatedButton(
-          onPressed: _fetchEvents,
+          onPressed: _updatePoem,
           child: const Text("Fetch events"),
         ),
       ],

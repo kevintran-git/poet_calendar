@@ -13,7 +13,7 @@ class AuthManager {
   // Declare a GoogleSignIn object with the same scopes and client ID as before
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
-      calendar.CalendarApi.calendarEventsReadonlyScope,
+      calendar.CalendarApi.calendarReadonlyScope,
     ],
     clientId: Env.googleClientId,
   );
