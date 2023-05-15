@@ -1,17 +1,18 @@
 import 'package:dart_openai/openai.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:poet_calendar/auth.dart';
 import 'package:googleapis/calendar/v3.dart' as calendar;
 
-class CalendarWidget extends StatefulWidget {
-  const CalendarWidget({Key? key}) : super(key: key);
+class PoemWidget extends StatefulWidget {
+  const PoemWidget({Key? key}) : super(key: key);
 
   @override
-  State<CalendarWidget> createState() => CalendarWidgetState();
+  State<PoemWidget> createState() => PoemWidgetState();
 }
 
-class CalendarWidgetState extends State<CalendarWidget> {
+class PoemWidgetState extends State<PoemWidget> {
   String poem = "Loading...";
 
   @override
@@ -75,9 +76,12 @@ class CalendarWidgetState extends State<CalendarWidget> {
   void _updatePoem() async {
     var authenticatedClient = await AuthManager().authenticatedClient;
     var events = await _fetchEvents(authenticatedClient);
-    // var generatedPoem = await _generatePoem(events);
+    var generatedPoem = await _generatePoem(events);
     setState(() {
-      poem = events ?? "no events :(";
+      poem = generatedPoem;
+      if (kDebugMode) {
+        print(poem);
+      }
     });
   }
 
