@@ -5,6 +5,8 @@ import 'package:poet_calendar/calendar.dart';
 import 'package:poet_calendar/clock.dart';
 import 'package:poet_calendar/env/env.dart';
 import 'package:poet_calendar/weather.dart';
+import 'package:flutter/services.dart'; // For `SystemChrome`
+
 
 void main() {
   OpenAI.apiKey = Env.openAiKey;
@@ -16,6 +18,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []); // Hide status bar
     return MaterialApp(
       title: 'Jason\'s Magic Calendar',
       darkTheme: ThemeData(
