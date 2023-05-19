@@ -1,7 +1,8 @@
+import 'package:cron/cron.dart';
 import 'package:dart_openai/openai.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
+import 'package:googleapis/calendar/v3.dart';
 import 'package:poet_calendar/auth.dart';
 import 'package:googleapis/calendar/v3.dart' as calendar;
 
@@ -20,19 +21,20 @@ class PoemWidgetState extends State<PoemWidget> {
     super.initState();
     // Call updatePoem here
     _updatePoem();
+
+    final cron = Cron();
+    cron.schedule(Schedule(days: 1), () {
+      _updatePoem();
+    });
   }
 
   // A method to fetch the user's calendar events
-  Future<String?> _fetchEvents(Client authenticatedClient) async {
-// Create a CalendarApi client which can be used to fetch calendar events
-    var calendarApi = calendar.CalendarApi(authenticatedClient);
-
+  Future<String?> _fetchEvents(CalendarApi calendarApi) async {
 // Get a list of calendars
     var calList = await calendarApi.calendarList.list();
-
 // Get the start and end of today in UTC
     var now = DateTime.now();
-    var startOfDay = DateTime.utc(now.year, now.month, now.day);
+    var startOfDay = DateTime(now.year, now.month, now.day);
     var endOfDay = startOfDay
         .add(const Duration(days: 1))
         .subtract(const Duration(seconds: 1));
@@ -42,9 +44,12 @@ class PoemWidgetState extends State<PoemWidget> {
     for (var cal in calList.items!) {
       // Get the calendar id
       var calId = cal.id!;
+
       // Get the events for this calendar that occur today
-      var calEvents = await calendarApi.events
-          .list(calId, timeMin: startOfDay, timeMax: endOfDay);
+      var calEvents = await calendarApi.events.list(calId,
+          timeMin: startOfDay,
+          timeMax: endOfDay,
+          timeZone: 'America/Los_Angeles');
 
       allEvents.addAll(calEvents.items as Iterable<calendar.Event>);
     }
@@ -52,6 +57,10 @@ class PoemWidgetState extends State<PoemWidget> {
     // event in allEvents
 
     var events = allEvents.map((e) => {e.summary}).join("\n");
+
+    if (kDebugMode) {
+      print(events);
+    }
 
     return events;
   }
@@ -75,7 +84,8 @@ class PoemWidgetState extends State<PoemWidget> {
 
   void _updatePoem() async {
     var authenticatedClient = await AuthManager().authenticatedClient;
-    var events = await _fetchEvents(authenticatedClient);
+    var calendarApi = calendar.CalendarApi(authenticatedClient);
+    var events = await _fetchEvents(calendarApi);
     var generatedPoem = await _generatePoem(events);
     setState(() {
       poem = generatedPoem;
