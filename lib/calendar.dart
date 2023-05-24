@@ -1,4 +1,4 @@
-import 'package:cron/cron.dart';
+import 'dart:async';
 import 'package:dart_openai/openai.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,20 +19,50 @@ class PoemWidgetState extends State<PoemWidget> {
   @override
   void initState() {
     super.initState();
-    // Call updatePoem here
-    _updatePoem();
+    startCalendar();
+  }
 
-    final cron = Cron();
-    cron.schedule(Schedule(days: 1), () {
-      _updatePoem();
+  void startCalendar() async {
+    var authenticatedClient = await AuthManager().authenticatedClient;
+    var calendarApi = calendar.CalendarApi(authenticatedClient);
+    var calendarIds = await _fetchCalendars(calendarApi);
+    // Call updatePoem here
+    _updatePoem(calendarApi, calendarIds);
+
+    Timer.periodic(const Duration(days: 1), (timer) {
+      _updatePoem(calendarApi, calendarIds);
     });
   }
 
-  // A method to fetch the user's calendar events
-  Future<String?> _fetchEvents(CalendarApi calendarApi) async {
-// Get a list of calendars
+  Future<List<String>> _fetchCalendars(CalendarApi calendarApi) async {
+    // Get a list of all the users' calendars
     var calList = await calendarApi.calendarList.list();
-// Get the start and end of today in UTC
+    List<String> calendarIds = [];
+
+    // ignore: use_build_context_synchronously
+    List<bool>? checkedList = await showDialog<List<bool>>(
+      context: context,
+      builder: (BuildContext context) {
+        return CalendarPopup(calList: calList.items ?? []);
+      },
+    );
+
+    if (checkedList != null) {
+      for (int i = 0; i < checkedList.length; i++) {
+        if (checkedList[i]) {
+          var calId = calList.items?[i].id;
+          if (calId == null) continue;
+          calendarIds.add(calId);
+        }
+      }
+    }
+    return calendarIds;
+  }
+
+  // A method to fetch the user's calendar events
+  Future<String> _fetchEvents(
+      CalendarApi calendarApi, List<String> calendarIds) async {
+    // Get the start and end of today in UTC
     var now = DateTime.now();
     var startOfDay = DateTime(now.year, now.month, now.day);
     var endOfDay = startOfDay
@@ -40,21 +70,14 @@ class PoemWidgetState extends State<PoemWidget> {
         .subtract(const Duration(seconds: 1));
     List<calendar.Event> allEvents = [];
 
-// Iterate over the calendars
-    for (var cal in calList.items!) {
-      // Get the calendar id
-      var calId = cal.id!;
-
-      // Get the events for this calendar that occur today
+    // For each calendar, get the events for today
+    for (var calId in calendarIds) {
       var calEvents = await calendarApi.events.list(calId,
           timeMin: startOfDay,
           timeMax: endOfDay,
           timeZone: 'America/Los_Angeles');
-
       allEvents.addAll(calEvents.items as Iterable<calendar.Event>);
     }
-
-    // event in allEvents
 
     var events = allEvents.map((e) => {e.summary}).join("\n");
 
@@ -65,7 +88,7 @@ class PoemWidgetState extends State<PoemWidget> {
     return events;
   }
 
-  Future<String> _generatePoem(String? events) async {
+  Future<String> _generatePoem(String events) async {
     var prompt = "create a poem from my calendar events: $events";
 
     OpenAIChatCompletionModel chatCompletion =
@@ -82,10 +105,8 @@ class PoemWidgetState extends State<PoemWidget> {
     return chatCompletion.choices.first.message.content;
   }
 
-  void _updatePoem() async {
-    var authenticatedClient = await AuthManager().authenticatedClient;
-    var calendarApi = calendar.CalendarApi(authenticatedClient);
-    var events = await _fetchEvents(calendarApi);
+  void _updatePoem(CalendarApi calendarApi, List<String> calendarIds) async {
+    var events = await _fetchEvents(calendarApi, calendarIds);
     var generatedPoem = await _generatePoem(events);
     setState(() {
       poem = generatedPoem;
@@ -100,6 +121,69 @@ class PoemWidgetState extends State<PoemWidget> {
     return Text(
       poem,
       style: Theme.of(context).textTheme.displaySmall,
+    );
+  }
+}
+
+class CalendarPopup extends StatefulWidget {
+  final List<CalendarListEntry> calList;
+  const CalendarPopup({super.key, required this.calList});
+
+  @override
+  _CalendarPopupState createState() => _CalendarPopupState();
+}
+
+class _CalendarPopupState extends State<CalendarPopup> {
+  bool _selectAll = true;
+  List<bool> _checkedList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkedList = List<bool>.filled(widget.calList.length, true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select Calendars'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextButton(
+              child: Text(_selectAll ? 'Deselect All' : 'Select All'),
+              onPressed: () {
+                setState(() {
+                  _selectAll = !_selectAll;
+                  _checkedList =
+                      List<bool>.filled(widget.calList.length, _selectAll);
+                });
+              },
+            ),
+            const Divider(),
+            ...List<Widget>.generate(widget.calList.length, (index) {
+              return CheckboxListTile(
+                title: Text(widget.calList[index].summary ?? "No summary"),
+                value: _checkedList[index],
+                onChanged: (bool? value) {
+                  setState(() {
+                    _checkedList[index] = value!;
+                  });
+                },
+              );
+            }),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          child: const Text('OK'),
+          onPressed: () {
+            Navigator.of(context).pop(_checkedList);
+          },
+        ),
+      ],
     );
   }
 }
