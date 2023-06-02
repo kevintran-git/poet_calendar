@@ -1,16 +1,22 @@
 import 'package:dart_openai/openai.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:poet_calendar/auth_wrapper.dart';
 import 'package:poet_calendar/calendar.dart';
 import 'package:poet_calendar/clock.dart';
 import 'package:poet_calendar/env/env.dart';
 import 'package:poet_calendar/weather.dart';
 import 'package:flutter/services.dart'; // For `SystemChrome`
+import 'package:wakelock/wakelock.dart';
 
 
 void main() {
   OpenAI.apiKey = Env.openAiKey;
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(child: 
+    MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -19,6 +25,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []); // Hide status bar
+    Wakelock.enable(); // Prevent screen from sleeping
     return MaterialApp(
       title: 'Jason\'s Magic Calendar',
       darkTheme: ThemeData(
@@ -59,7 +66,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       // basic layout widget that provides app structure
       body: SafeArea(
         // avoids status bar, notch
@@ -71,11 +78,11 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment
                   .spaceBetween, // controls how children are aligned along the main axis
               children: [
-                ClockWidget(),
+                const ClockWidget(),
                 WeatherWidget(),
               ],
             ),
-            Expanded(
+            const Expanded(
               child: AuthWrapper(
                   child: // helper class that displays different widgets depending on auth status
                       FittedBox(

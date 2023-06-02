@@ -62,21 +62,21 @@ final _headers = {
   a given GPS coordinate (or even a bad GPS coordinate), but for the sake of
   simplicity in this learning app, we'll just assume there's at least one.
  */
-Future<String> _getStationUrl() async {
-  const latitude = "37.4275";
-  const longitude = "-122.1697";
-  final response = await http.get(// uri
-      Uri.parse("https://api.weather.gov/points/$latitude%2C$longitude/stations"),
-      headers: _headers
-  );
+// Future<String> _getStationUrl() async {
+//   const latitude = "37.4275";
+//   const longitude = "-122.1697";
+//   final response = await http.get(// uri
+//       Uri.parse("https://api.weather.gov/points/$latitude%2C$longitude/stations"),
+//       headers: _headers
+//   );
 
-  if (response.statusCode == 200) {
-    final json = convert.jsonDecode(response.body);
-    return json["observationStations"][0];
-  } else {
-    return "Error: ${response.statusCode}";
-  }
-}
+//   if (response.statusCode == 200) {
+//     final json = convert.jsonDecode(response.body);
+//     return json["observationStations"][0];
+//   } else {
+//     return "Error: ${response.statusCode}";
+//   }
+// }
 
 /*
   The relevant part of the JSON that this returns is in this structure:
@@ -101,7 +101,7 @@ Future<String> _getStationUrl() async {
 Future<List<Observation>?> _getPressureHistoryByStationUrl(String stationUrl) async {
   // In practice, the resolution of data we will get back is one hour. So we have to
   // request a few hours in order to get much of anything.
-  final now = DateTime.now();
+  // final now = DateTime.now();
   //final requestLimit = now.subtract(const Duration(hours: 4));
 
   // NWS doesn't allow us to pass milliseconds, but Dart's date formatting
@@ -125,7 +125,7 @@ Future<List<Observation>?> _getPressureHistoryByStationUrl(String stationUrl) as
     // verify that it's "unit:Pa", but since this is a simple learning app,
     // I'm skipping that check here.
     final convertedFeatures = features.map<Observation>((feature) {
-      final properties = feature["properties"];
+      //final properties = feature["properties"];
       
     }).toList();
 
