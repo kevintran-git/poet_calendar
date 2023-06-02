@@ -1,4 +1,5 @@
 import 'package:dart_openai/openai.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:poet_calendar/auth_wrapper.dart';
@@ -25,7 +26,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []); // Hide status bar
-    Wakelock.enable(); // Prevent screen from sleeping
+
+    if (!kIsWeb) {
+      Wakelock.enable(); // Prevent screen from sleeping
+    }
+    
     return MaterialApp(
       title: 'Jason\'s Magic Calendar',
       darkTheme: ThemeData(

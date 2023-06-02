@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:dart_openai/openai.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -79,7 +80,7 @@ class PoemWidgetState extends State<PoemWidget> {
       allEvents.addAll(calEvents.items as Iterable<calendar.Event>);
     }
 
-    var events = allEvents.map((e) => {e.summary}).join("\n");
+    var events = allEvents.map((e) => {eventToJson(e)}).join("\n");
 
     if (kDebugMode) {
       print(events);
@@ -114,6 +115,35 @@ class PoemWidgetState extends State<PoemWidget> {
         print(poem);
       }
     });
+  }
+
+  // This code block defines a function named eventToJson that takes an Event object as input and returns a JSON-encoded string. 
+  // The function first creates an empty list of maps named attendees. 
+  // It then iterates over the attendees list of the input event object and adds a map containing the attendee's name and email to the attendees list. 
+  // Finally, the function creates a map named body containing the event's summary, start and end times, location, and attendees list. 
+  // The body map is then encoded to a JSON string and returned.
+
+  String eventToJson(Event event) {
+    List<Map<String, dynamic>> attendees = [];
+
+    event.attendees?.forEach((attendee) {
+      attendees.add({
+        'name': attendee.displayName,
+        'email': attendee.email,
+        // 'is_friend': false,
+        // 'importance': 'high',
+      });
+    });
+
+    Map<String, dynamic> body = {
+      'title': event.summary,
+      'start': event.start?.dateTime?.toString(),
+      'end': event.end?.dateTime?.toString(),
+      'location': event.location,
+      'attendees': attendees,
+    };
+
+    return jsonEncode(body);
   }
 
   @override
