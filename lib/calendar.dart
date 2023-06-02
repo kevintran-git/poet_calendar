@@ -82,9 +82,8 @@ class PoemWidgetState extends State<PoemWidget> {
 
     var events = allEvents.map((e) => {eventToJson(e)}).join("\n");
 
-    if (kDebugMode) {
-      print(events);
-    }
+    // ignore: avoid_print
+    print(events);
 
     return events;
   }
@@ -111,16 +110,15 @@ class PoemWidgetState extends State<PoemWidget> {
     var generatedPoem = await _generatePoem(events);
     setState(() {
       poem = generatedPoem;
-      if (kDebugMode) {
-        print(poem);
-      }
+      // ignore: avoid_print
+      print(poem);
     });
   }
 
-  // This code block defines a function named eventToJson that takes an Event object as input and returns a JSON-encoded string. 
-  // The function first creates an empty list of maps named attendees. 
-  // It then iterates over the attendees list of the input event object and adds a map containing the attendee's name and email to the attendees list. 
-  // Finally, the function creates a map named body containing the event's summary, start and end times, location, and attendees list. 
+  // This code block defines a function named eventToJson that takes an Event object as input and returns a JSON-encoded string.
+  // The function first creates an empty list of maps named attendees.
+  // It then iterates over the attendees list of the input event object and adds a map containing the attendee's name and email to the attendees list.
+  // Finally, the function creates a map named body containing the event's summary, start and end times, location, and attendees list.
   // The body map is then encoded to a JSON string and returned.
 
   String eventToJson(Event event) {
@@ -160,7 +158,7 @@ class CalendarPopup extends StatefulWidget {
   const CalendarPopup({super.key, required this.calList});
 
   @override
-  _CalendarPopupState createState() => _CalendarPopupState();
+  State<CalendarPopup> createState() => _CalendarPopupState();
 }
 
 class _CalendarPopupState extends State<CalendarPopup> {
