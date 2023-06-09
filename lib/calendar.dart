@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:dart_openai/openai.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:googleapis/calendar/v3.dart';
 import 'package:poet_calendar/auth.dart';
@@ -61,13 +60,12 @@ class PoemWidgetState extends State<PoemWidget> {
   }
 
   // A method to fetch the user's calendar events
-  Future<String> _fetchEvents(
-      CalendarApi calendarApi, List<String> calendarIds) async {
+  Future<String> _fetchEvents(CalendarApi calendarApi, List<String> calendarIds) async {
     // Get the start and end of today in UTC
     var now = DateTime.now();
     var startOfDay = DateTime(now.year, now.month, now.day);
     var endOfDay = startOfDay
-        .add(const Duration(days: 1))
+        .add(const Duration(days: 7))
         .subtract(const Duration(seconds: 1));
     List<calendar.Event> allEvents = [];
 
@@ -77,14 +75,27 @@ class PoemWidgetState extends State<PoemWidget> {
           timeMin: startOfDay,
           timeMax: endOfDay,
           timeZone: 'America/Los_Angeles');
-      allEvents.addAll(calEvents.items as Iterable<calendar.Event>);
-    }
 
-    var events = allEvents.map((e) => {eventToJson(e)}).join("\n");
+      for(Event event in calEvents.items as Iterable<calendar.Event>) {
+          if (event.recurrence != null && event.recurrence!.isNotEmpty){
+            var instances = await calendarApi.events.instances(calId, event.id.toString(),
+                timeMin: startOfDay,
+                timeMax: endOfDay,
+                timeZone: 'America/Los_Angeles');
+                allEvents.addAll(instances.items as Iterable<calendar.Event>);
+          } else {
+            allEvents.add(event);
+          }
+        }
+      }
+
+    // filter out events that have a null or empty start or end time
+    var events = allEvents.where((e) => e.start?.dateTime != null && e.end?.dateTime != null)
+    .map((e) => {eventToJson(e)})
+    .join("\n");
 
     // ignore: avoid_print
     print(events);
-
     return events;
   }
 
